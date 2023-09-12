@@ -28,6 +28,12 @@
                                     <v-col cols="12" sm="6" md="4">
                                         <v-text-field v-model="editedItem.fat" label="Fat (g)"></v-text-field>
                                     </v-col>
+                                    <v-col cols="12" sm="6" md="4">
+                                        <v-text-field v-model="editedItem.carbs" label="Carbs (g)"></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12" sm="6" md="4">
+                                        <v-text-field v-model="editedItem.protein" label="Protein (g)"></v-text-field>
+                                    </v-col>
                                 </v-row>
                             </v-container>
                         </v-card-text>
@@ -86,6 +92,8 @@ const headers = [
     },
     { title: 'Calories', key: 'calories' },
     { title: 'Fat (g)', key: 'fat' },
+    { title: 'Carbs (g)', key: 'carbs' },
+    { title: 'Protein (g)', key: 'protein' },
     { title: 'Actions', key: 'actions', sortable: false },
 ];
 const desserts = ref([]);
@@ -110,15 +118,15 @@ const formTitle = computed(() => {
 });
 
 const close = () => {
-    dialog.value = false;
-    editedItem.value = { ...defaultItem };
-    editedIndex.value = -1;
+  dialog.value = false;
+  editedItem.value = { ...defaultItem };
+  editedIndex.value = -1;
 };
 
 const closeDelete = () => {
-    dialogDelete.value = false;
-    editedItem.value = { ...defaultItem };
-    editedIndex.value = -1;
+  dialogDelete.value = false;
+  editedItem.value = { ...defaultItem };
+  editedIndex.value = -1;
 };
 
 const save = () => {
@@ -126,17 +134,6 @@ const save = () => {
         Object.assign(desserts.value[editedIndex.value], editedItem);
     } else {
         desserts.value.push(editedItem);
-        fetch('https://jsonplaceholder.typicode.com/posts', {
-            method: 'POST',
-            body: JSON.stringify({
-                title: editedItem.calories,
-                body: editedItem.fat,
-                userId: 1,
-            }),
-            headers: {
-                'Content-type': 'application/json; charset=UTF-8',
-            },
-        })
     }
     close();
 };
@@ -233,43 +230,8 @@ const deleteItemConfirm = () => {
     closeDelete();
 };
 
-const posts = ref([]);
-const users = ref([]);
-
-async function obtenerInfo() {
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts/");
-    const data = await response.json();
-    posts.value = data;
-    console.log(posts.value)
-}
-
-async function obtenerUsuario() {
-    const response = await fetch("https://jsonplaceholder.typicode.com/users/");
-    const data = await response.json();
-    users.value = data;
-    console.log(users.value)
-}
-
-const mergedData = computed(() => {
-    const merged = [];
-    for (const post of posts.value) {
-        const user = users.value.find((u) => u.id === post.userId);
-        if (user) {
-            merged.push({
-                //id: users.id,
-                name: user.name,
-                calories: post.title,
-                fat: post.body,
-            });
-        }
-    }
-    return merged;
-});
-
 onMounted(() => {
     initialize();
-    obtenerInfo();
-    obtenerUsuario();
 });
 
 watch(dialog, (val) => {
@@ -279,5 +241,4 @@ watch(dialog, (val) => {
 watch(dialogDelete, (val) => {
     val || closeDelete();
 });
-
 </script>

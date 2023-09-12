@@ -16,7 +16,7 @@
             </v-list-item>
             
             <v-list-item prepend-icon="mdi-table">
-              <router-link to="/Tablas">
+              <router-link to="/tabla_datos">
                 Tablas
               </router-link>       
             </v-list-item>
