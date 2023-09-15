@@ -126,17 +126,6 @@ const save = () => {
         Object.assign(desserts.value[editedIndex.value], editedItem);
     } else {
         desserts.value.push(editedItem);
-        fetch('https://jsonplaceholder.typicode.com/posts', {
-            method: 'POST',
-            body: JSON.stringify({
-                title: editedItem.calories,
-                body: editedItem.fat,
-                userId: 1,
-            }),
-            headers: {
-                'Content-type': 'application/json; charset=UTF-8',
-            },
-        })
     }
     close();
 };
@@ -249,22 +238,6 @@ async function obtenerUsuario() {
     users.value = data;
     console.log(users.value)
 }
-
-const mergedData = computed(() => {
-    const merged = [];
-    for (const post of posts.value) {
-        const user = users.value.find((u) => u.id === post.userId);
-        if (user) {
-            merged.push({
-                //id: users.id,
-                name: user.name,
-                calories: post.title,
-                fat: post.body,
-            });
-        }
-    }
-    return merged;
-});
 
 onMounted(() => {
     initialize();
