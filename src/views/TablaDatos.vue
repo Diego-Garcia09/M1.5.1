@@ -1,8 +1,8 @@
 <template>
-    <v-data-table :headers="headers" :items="desserts" :sort-by="[{ key: 'id', order: 'asc' }]" class="elevation-1">
+    <v-data-table :headers="headers" :items="publicaciones" :sort-by="[{ key: 'id', order: 'asc' }]" class="elevation-1">
         <template v-slot:top>
             <v-toolbar flat>
-                <v-toolbar-title>My CRUD</v-toolbar-title>
+                <v-toolbar-title>Mi CRUD</v-toolbar-title>
                 <v-divider class="mx-4" inset vertical></v-divider>
                 <v-spacer></v-spacer>
                 <v-dialog v-model="dialog" max-width="500px">
@@ -23,13 +23,13 @@
                                         <v-text-field v-model="editedItem.id" label="ID"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6" md="4">
-                                        <v-text-field v-model="editedItem.name" label="Dessert name"></v-text-field>
+                                        <v-text-field v-model="editedItem.name" label="Autor"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6" md="4">
-                                        <v-text-field v-model="editedItem.calories" label="Calories"></v-text-field>
+                                        <v-text-field v-model="editedItem.title" label="Title"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6" md="4">
-                                        <v-text-field v-model="editedItem.fat" label="Fat (g)"></v-text-field>
+                                        <v-text-field v-model="editedItem.body" label="Body"></v-text-field>
                                     </v-col>
                                 </v-row>
                             </v-container>
@@ -82,87 +82,127 @@ const dialog = ref(false);
 const dialogDelete = ref(false);
 const headers = [
     {
-        title: 'Dessert (100g serving)',
+        title: 'Autor',
         align: 'start',
         sortable: false,
         key: 'name',
     },
-    { title: 'Calories', key: 'calories' },
-    { title: 'Fat (g)', key: 'fat' },
+    { title: 'Title', key: 'title' },
+    { title: 'Body', key: 'body' },
     { title: 'Actions', key: 'actions', sortable: false },
 ];
-const desserts = ref([]);
+const publicaciones = ref([]);
 const editedIndex = ref(-1);
 const editedItem = reactive({
     id: 0,
     name: '',
-    calories: 0,
-    fat: 0,
+    title: 0,
+    body: 0,
 });
 const defaultItem = {
     id: 0,
     name: '',
-    calories: 0,
-    fat: 0,
+    title: 0,
+    body: 0,
 };
 
 const editItem = async (item) => {
-    // Asigna los valores del elemento editado a editedItem
     editedItem.id = item.id;
     editedItem.name = item.name;
-    editedItem.calories = item.calories;
-    editedItem.fat = item.fat;
-
-    // Abre el diálogo de edición
+    editedItem.title = item.title;
+    editedItem.body = item.body;
     dialog.value = true;
-    // Encuentra el índice del elemento editado en la lista desserts
-    editedIndex.value = desserts.value.findIndex((d) => d.id === item.id);
-
-    const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${editedIndex}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            id: editedIndex,
-            title: editedItem.calories,
-            body: editItem.fat,
-            userId: editedItem.id,
-        }),
-        headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-        },
-    });
+    editedIndex.value = publicaciones.value.findIndex((d) => d.id === item.id);
 };
 
 const save = async () => {
-    const newItem = {
-        title: editedItem.calories.toString(), // Utiliza el campo 'name' para el título del nuevo elemento
-        body: editedItem.fat.toString(), // Utiliza el campo 'calories' como el cuerpo del nuevo elemento (conversión a cadena)
-        userId: editedItem.id, // Puedes establecer el 'userId' según tus necesidades
-    };
+    if (editedIndex.value === -1) {
+        const newItem = {
+            title: editedItem.title.toString(),
+            body: editedItem.body.toString(),
+            userId: editedItem.id,
+        };
 
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
-        method: 'POST',
-        body: JSON.stringify(newItem),
-        headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-        },
-    });
-
-    if (response.ok) {
-        const jsonResponse = await response.json();
-
-        // Agrega el nuevo elemento a la lista 'desserts'
-        desserts.value.push({
-            id: jsonResponse.id, // Utiliza el ID devuelto por el servidor
-            name: editedItem.name,
-            calories: editedItem.calories,
-            fat: editedItem.fat,
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            body: JSON.stringify(newItem),
+            headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+            },
         });
 
-        // Cierra el diálogo y restablece el formulario
-        close();
+        if (response.ok) {
+            const jsonResponse = await response.json();
+
+            publicaciones.value.push({
+                id: jsonResponse.id,
+                name: editedItem.name,
+                title: editedItem.title,
+                body: editedItem.body,
+            });
+
+            close();
+        } else {
+            console.error('Error al agregar el elemento');
+        }
     } else {
-        console.error('Error al agregar el elemento');
+        const editedDessert = {
+            id: editedIndex.value,
+            title: editedItem.title.toString(),
+            body: editedItem.body.toString(),
+            userId: editedItem.id,
+        };
+        
+        const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${parseInt(editedIndex.value)+1}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                userId: editedDessert.userId,
+                id: editedDessert.id,
+                title: editedDessert.title,
+                body: editedDessert.body,
+            }),
+            headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+            },
+        });
+
+        if (response.ok) {
+            const jsonResponse = await response.json();
+
+            const index = editedIndex.value;
+            publicaciones.value[index] = {
+                id: jsonResponse.id,
+                name: editedItem.name,
+                title: editedItem.title,
+                body: editedItem.body,
+            };
+
+            close();
+        } else {
+            console.error('Error al editar el elemento');
+        }
     }
+};
+
+const deleteItem = async (item) => {
+        try {
+            const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${item.id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                const index = publicaciones.value.findIndex((d) => d.id === item.id);
+                if (index !== -1) {
+                    publicaciones.value.splice(index, 1);
+                }
+
+                closeDelete();
+            } else {
+                console.error('Error al eliminar el elemento');
+            }
+        } catch (error) {
+            console.error('Error al eliminar el elemento', error);
+        }
 };
 
 const formTitle = computed(() => {
@@ -171,7 +211,7 @@ const formTitle = computed(() => {
 
 const close = () => {
     dialog.value = false;
-    editedItem.value = { ...defaultItem };
+    Object.assign(editedItem, defaultItem);
     editedIndex.value = -1;
 };
 
@@ -188,19 +228,19 @@ const initialize = async () => {
 }
 
 async function mergedData() {
-  const mergedDesserts = [];
+  const mergedPublicaciones = [];
   for (const post of posts.value) {
     const user = users.value.find((u) => u.id === post.userId);
     if (user) {
-      mergedDesserts.push({
+      mergedPublicaciones.push({
         id: post.id,
         name: user.name,
-        calories: post.title,
-        fat: post.body,
+        title: post.title,
+        body: post.body,
       });
     }
   }
-  desserts.value = mergedDesserts;
+  publicaciones.value = mergedPublicaciones;
 }
 
 const posts = ref([]);
