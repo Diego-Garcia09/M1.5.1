@@ -1,5 +1,5 @@
 <template>
-    <v-data-table :headers="headers" :items="desserts" :sort-by="[{ key: 'calories', order: 'asc' }]" class="elevation-1">
+    <v-data-table :headers="headers" :items="desserts" :sort-by="[{ key: 'id', order: 'asc' }]" class="elevation-1">
         <template v-slot:top>
             <v-toolbar flat>
                 <v-toolbar-title>My CRUD</v-toolbar-title>
@@ -19,6 +19,9 @@
                         <v-card-text>
                             <v-container>
                                 <v-row>
+                                    <v-col cols="12" sm="6" md="4">
+                                        <v-text-field v-model="editedItem.id" label="ID"></v-text-field>
+                                    </v-col>
                                     <v-col cols="12" sm="6" md="4">
                                         <v-text-field v-model="editedItem.name" label="Dessert name"></v-text-field>
                                     </v-col>
@@ -91,18 +94,75 @@ const headers = [
 const desserts = ref([]);
 const editedIndex = ref(-1);
 const editedItem = reactive({
+    id: 0,
     name: '',
     calories: 0,
     fat: 0,
-    carbs: 0,
-    protein: 0,
 });
 const defaultItem = {
+    id: 0,
     name: '',
     calories: 0,
     fat: 0,
-    carbs: 0,
-    protein: 0,
+};
+
+const editItem = async (item) => {
+    // Asigna los valores del elemento editado a editedItem
+    editedItem.id = item.id;
+    editedItem.name = item.name;
+    editedItem.calories = item.calories;
+    editedItem.fat = item.fat;
+
+    // Abre el diálogo de edición
+    dialog.value = true;
+    // Encuentra el índice del elemento editado en la lista desserts
+    editedIndex.value = desserts.value.findIndex((d) => d.id === item.id);
+
+    const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${editedIndex}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            id: editedIndex,
+            title: editedItem.calories,
+            body: editItem.fat,
+            userId: editedItem.id,
+        }),
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+    });
+};
+
+const save = async () => {
+    const newItem = {
+        title: editedItem.calories.toString(), // Utiliza el campo 'name' para el título del nuevo elemento
+        body: editedItem.fat.toString(), // Utiliza el campo 'calories' como el cuerpo del nuevo elemento (conversión a cadena)
+        userId: editedItem.id, // Puedes establecer el 'userId' según tus necesidades
+    };
+
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+        method: 'POST',
+        body: JSON.stringify(newItem),
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+    });
+
+    if (response.ok) {
+        const jsonResponse = await response.json();
+
+        // Agrega el nuevo elemento a la lista 'desserts'
+        desserts.value.push({
+            id: jsonResponse.id, // Utiliza el ID devuelto por el servidor
+            name: editedItem.name,
+            calories: editedItem.calories,
+            fat: editedItem.fat,
+        });
+
+        // Cierra el diálogo y restablece el formulario
+        close();
+    } else {
+        console.error('Error al agregar el elemento');
+    }
 };
 
 const formTitle = computed(() => {
@@ -121,106 +181,27 @@ const closeDelete = () => {
     editedIndex.value = -1;
 };
 
-const save = () => {
-    if (editedIndex.value > -1) {
-        Object.assign(desserts.value[editedIndex.value], editedItem);
-    } else {
-        desserts.value.push(editedItem);
+const initialize = async () => {
+    await obtenerInfo();
+    await obtenerUsuario();
+    await mergedData();
+}
+
+async function mergedData() {
+  const mergedDesserts = [];
+  for (const post of posts.value) {
+    const user = users.value.find((u) => u.id === post.userId);
+    if (user) {
+      mergedDesserts.push({
+        id: post.id,
+        name: user.name,
+        calories: post.title,
+        fat: post.body,
+      });
     }
-    close();
-};
-
-const initialize = () => {
-    desserts.value = [
-        {
-            name: 'Frozen Yogurt',
-            calories: 159,
-            fat: 6.0,
-            carbs: 24,
-            protein: 4.0,
-        },
-        {
-            name: 'Ice cream sandwich',
-            calories: 237,
-            fat: 9.0,
-            carbs: 37,
-            protein: 4.3,
-        },
-        {
-            name: 'Eclair',
-            calories: 262,
-            fat: 16.0,
-            carbs: 23,
-            protein: 6.0,
-        },
-        {
-            name: 'Cupcake',
-            calories: 305,
-            fat: 3.7,
-            carbs: 67,
-            protein: 4.3,
-        },
-        {
-            name: 'Gingerbread',
-            calories: 356,
-            fat: 16.0,
-            carbs: 49,
-            protein: 3.9,
-        },
-        {
-            name: 'Jelly bean',
-            calories: 375,
-            fat: 0.0,
-            carbs: 94,
-            protein: 0.0,
-        },
-        {
-            name: 'Lollipop',
-            calories: 392,
-            fat: 0.2,
-            carbs: 98,
-            protein: 0,
-        },
-        {
-            name: 'Honeycomb',
-            calories: 408,
-            fat: 3.2,
-            carbs: 87,
-            protein: 6.5,
-        },
-        {
-            name: 'Donut',
-            calories: 452,
-            fat: 25.0,
-            carbs: 51,
-            protein: 4.9,
-        },
-        {
-            name: 'KitKat',
-            calories: 518,
-            fat: 26.0,
-            carbs: 65,
-            protein: 7,
-        },
-    ];
-};
-
-const editItem = (item) => {
-    editedIndex.value = desserts.value.indexOf(item);
-    Object.assign(editedItem, item);
-    dialog.value = true;
-};
-
-const deleteItem = (item) => {
-    editedIndex.value = desserts.value.indexOf(item);
-    Object.assign(editedItem, item);
-    dialogDelete.value = true;
-};
-
-const deleteItemConfirm = () => {
-    desserts.value.splice(editedIndex.value, 1);
-    closeDelete();
-};
+  }
+  desserts.value = mergedDesserts;
+}
 
 const posts = ref([]);
 const users = ref([]);
@@ -241,8 +222,6 @@ async function obtenerUsuario() {
 
 onMounted(() => {
     initialize();
-    obtenerInfo();
-    obtenerUsuario();
 });
 
 watch(dialog, (val) => {
